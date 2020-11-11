@@ -11,6 +11,9 @@ view: document.querySelector('#scene'),
 resolution: window.devicePixelRatio || 1
 });
 
+
+
+
 // Картинка заднего фона
 const background_image = PIXI.Texture.from('assets/stars.jpg');
 const back = new PIXI.Sprite(background_image);
@@ -41,16 +44,17 @@ const gun = [];
 let status = 0;
 for(let i = 0; i < magazine; i++)
 {
-const texture2 = PIXI.Texture.from('assets/bullet.png');
+const texture2 = PIXI.Texture.from('assets/bulletstorm.png');
 const bullet2 = PIXI.Sprite.from(texture2);
 bullet2.anchor.set(0.5);
 bullet2.visible = false;
+bullet2.tint = 0xFFD300;
+bullet2.scale.set(0.006);
 bullet2.interactive = true;
 bullet2.x = screen.width/2;
 bullet2.y = screen.height-200;
-bullet2.scale.set(1.4);
 gun.push(bullet2);
-app.stage.addChild(bullet);
+app.stage.addChild(bullet2);
 }
 
 // Создание ракеты
@@ -67,10 +71,11 @@ let bool = 0;
 
 // Создание метеоритов
 const astros = [];
+var check = new Boolean(false); 
 let lvltarget = 1000;
 var i = 1;                    
 function AstroLoop () {           
-setTimeout(function () {    
+setTimeout(function () { 
     const astro = PIXI.Sprite.from('/assets/astero.png');
     astro.interactive = true;
     astro.buttonMode = true;
@@ -84,7 +89,7 @@ setTimeout(function () {
     astro.visible = false;
     astros.push(astro);
     app.stage.addChild(astro);;          
-    i++;                                            
+    i++;                       
     if (i < lvltarget) {                 
     AstroLoop();                            
     }                                    
@@ -94,7 +99,7 @@ AstroLoop();
 
 // Созднание аптек
 const heals = [];
-let lvltarget2 = 10;
+let lvltarget2 = 1000;
 var i = 1;                    
 function HealLoop () {           
 setTimeout(function () {    
@@ -109,21 +114,21 @@ setTimeout(function () {
     healpoint.visible = false;
     heals.push(healpoint);
     app.stage.addChild(healpoint);;          
-    i++;                                            
+    i++;                      
     if (i < lvltarget2) {                 
     HealLoop();                            
     }                                    
-  }, Math.random() * 20000)
+  },  Math.random() * (20000 - 10000) + 10000)
 }
 HealLoop();
 
 // Создание магазинов для пулемета
 const magazines = [];
-let lvltarget3 = 20;
+let lvltarget3 = 500;
 var i = 1;                    
 function MagazineLoop () {           
 setTimeout(function () {    
-    const magaz = PIXI.Sprite.from('/assets/gunbullet.png');
+    const magaz = PIXI.Sprite.from('/assets/gunbullet2.png');
     magaz.interactive = true;
     magaz.anchor.set(0.5);
     magaz.x = Math.random() * app.screen.width;
@@ -134,11 +139,11 @@ setTimeout(function () {
     magaz.visible = false;
     magazines.push(magaz);
     app.stage.addChild(magaz);;          
-    i++;                                            
+    i++;                              
     if (i < lvltarget3) {                 
     MagazineLoop();                            
     }                                    
-  }, Math.random() * 20000)
+  }, Math.random() * (20000 - 10000) + 10000)
 }
 MagazineLoop();
 
@@ -151,6 +156,7 @@ const basicText = new PIXI.Text('Game Over', style);
 basicText.x = screen.width/2;
 basicText.y = screen.height/3;
 basicText.visible = false;
+basicText.zIndex = 10;
 app.stage.addChild(basicText);
 
 // Текст очков
@@ -159,11 +165,13 @@ const pointText = new PIXI.Text(pointtarget, style);
 basicText.fill = ['#ffffff'];
 pointText.x = screen.width/7;
 pointText.y = screen.height/6;
+pointText.zIndex = 10;
 app.stage.addChild(pointText);
 
 const pointText2 = new PIXI.Text('Счет:', style)
 pointText2.x = pointText.x - 100;
 pointText2.y = screen.height/6;
+pointText2.zIndex = 10;
 app.stage.addChild(pointText2);
 
 // Текст жизни
@@ -171,11 +179,13 @@ let life = 3;
 const lifeText = new PIXI.Text(life, style);
 lifeText.x = screen.width/7;
 lifeText.y = screen.height/5;
+lifeText.zIndex = 10;
 app.stage.addChild(lifeText);
 
 const lifeText2 = new PIXI.Text('Жизнь:', style)
 lifeText2.x = lifeText.x - 100;
 lifeText2.y = screen.height/5;
+lifeText2.zIndex = 10;
 app.stage.addChild(lifeText2);
 
 // Функция обновления тикера сообщения
@@ -200,15 +210,19 @@ if(bullet.y !=0){
   }
 })
 
+
+
 // Тикер анимации для метеоритов и других падающих объектов
+// Тикер для падения метеоритов
 app.ticker.add(() => {
     
     for (let i = 0; i < astros.length; i++) {
     const astro = astros[i];
     let Time = i + Math.random()*400;
-    setTimeout(() => meteor_coming(astro),Time);} 
+    setTimeout(() => meteor_coming(astro, astros),Time);} 
 });
 
+// Тикер падения аптечек
 app.ticker.add(() => {
   for (let i = 0; i < heals.length; i++) {
     const healpoint = heals[i];
@@ -216,36 +230,54 @@ app.ticker.add(() => {
     setTimeout(() => heal_coming(healpoint),Time);}
 })
 
+// Тикер падения магазинов
 app.ticker.add(() => {
-  if(status == 1)
-  {
-  for(let i = 0; i < magazine.length; i++) {
-    const bullet2 = magazine[i];
-    gunner(bullet2);
-    if (i == magazine.length-1)
-    status = 0;
-  }
-}
-})
-
-app.ticker.add(() => {
-  for (let i = 0; i < magazine.length; i++) {
+  for (let i = 0; i < magazines.length; i++) {
     const magaz = magazines[i];
     let Time = i + Math.random()*400;
     setTimeout(() => magazine_coming(magaz),Time);} 
 })
+
+// Тикер пулемета
+app.ticker.add(() => {
+  if(status == 1)
+  {
+  for(let i = 0; i < gun.length; i++) {
+  const bullet2 = gun[i];
+  if(bunny.y == bullet2.y)
+bullet2.x = bunny.x;
+  if(bullet2.y !=0){
+  bullet2.y -= 20 * (i+i);
+  }
+  if (i == gun.length - 1){
+    status = 0;
+  }
+}
+  }
+  else
+  {
+    for(let i = 0; i < gun.length; i++) {
+      const bullet2 = gun[i];
+    bullet2.y = bunny.y;
+    }
+  }
+
+})
+
+
 // Функция исчезновения объекта (со счетчиком)
 function visiblity(a){
-a.destroy();
-pointtarget++;
-updateStatusMessage(pointText,pointtarget);
+  if(a.interactive == true)
+  pointtarget++;
+a.interactive = false;
+app.stage.removeChild(a);
+updateStatusMessage(pointText,Math.floor(pointtarget));
 }
 
 // Функция исчезновения вещей
-function heal_visiblity(b){
-  b.destroy();
+function heal_visiblity(c){
+  app.stage.removeChild(c);
   bunny.tint = 0xFFFFFF;
-  bunny.scale.set(0.07);
   }
 
 
@@ -270,35 +302,82 @@ aBox.y < bBox.y + bBox.height;
 }
 
 // Создание метеора в анимации и его реакции на объекты
-function meteor_coming(a){
+function meteor_coming(a,b){
+  
 a.visible = true;
 a.direction += a.turningSpeed * 0.04;
 a.rotation += Math.random() * 0.05;
 a.y += Math.random() * a.speed;
 
 if(life < 0)
-{
+{ 
   basicText.visible = true;
   bunny.texture = texture_boom;
   bunny.scale.set(0.4);
   bullet.y = 0;
   bullet.alpha = 0;
   updateStatusMessage(lifeText, 0);
+  
 }
-else if(react(a, bunny) && life > 0)
-  { bool = 0;
+else if(react(a, bunny) && life > 0 && a.interactive == true)
+  { 
+    bool = 0;
     app.ticker.add(bunny_alpha_animate);
     life -= 0.018;
     setTimeout(function status(){bool = 1; bunny.alpha = 1;},2000);
     updateStatusMessage(lifeText, Math.floor(life));
-  }
-if (react(a, bullet) || react(a, bullet2)){
+    }
+if (react(a, bullet)){
+  check = true;
   a.texture = texture_boom;
   a.scale.set(0.1);
   a.tint = 0xFFFFFF;
-  setTimeout(() => visiblity(a),200);
+  setTimeout(() => visiblity(a),500);
+  b.splice(i);
+  
 if (delta == 0)
   delta += 0.1;
+  }
+if(a.y == bunny.y + 50)
+{
+  a.interactive = false;
+  app.stage.ticker.stop(a);
+  app.stage.removeChild(a);
+  a.destroy();
+  b.splice(i);
+}
+
+// Реакция пулемета на астеройды
+  if(status == 1)
+  {
+  bullet.y = bunny.y;
+  bullet.x = bunny.x;
+  for(let i = 0; i < gun.length; i++) {
+  const bullet2 = gun[i];
+    bullet2.visible = true;
+  if(bunny.y == bullet2.y)
+bullet2.x = bunny.x;
+  if(bullet2.y !=0){
+    bullet2.y -= 10 + i;
+  }
+  if (i == gun.length - 1){
+    status = 0;
+    bullet.y -= 10;
+  }
+  if (react(a, bullet2)){
+    a.texture = texture_boom;
+    a.scale.set(0.1);
+    a.tint = 0xFFFFFF;
+    setTimeout(() => visiblity(a),200);}
+  }
+} 
+  else
+  {
+    for(let i = 0; i < gun.length; i++) {
+      const bullet2 = gun[i];
+    bullet2.y = bunny.y;
+    bullet2.visible = false;
+    }
   }
 }
 
@@ -307,26 +386,19 @@ function heal_coming(b){
   b.visible = true;
   b.direction += b.turningSpeed * 0.04;
   b.y += Math.random() * b.speed;
-
-  if(react(b, bunny))
+  
+  if(react(b, bunny)&&life>0)
     { life += 0.018;
       bunny.tint = 0xFF0000;
       setTimeout(()=> heal_visiblity(b), 500);
       updateStatusMessage(lifeText, Math.floor(life));
     }
-  }
-
-// Создание анимации пулемета
-function gunner(a){
-  a.visible = true;
-  if(bunny.y == a.y)
-a.x = bunny.x;
-if(a.y !=0){
-  setTimeout(()=> function ping_bullet(){a.y -= 20;},200);
-  }
-  else if(a.y == 0){
-  a.y = screen.height-200;
-  }
+    if(b.y == bunny.y - 50)
+{
+  app.stage.ticker.stop(b);
+  b.destroy;
+  b.splice(i);
+}
 }
 
 // Создание магазинов в анимации и его реакция на объекты
@@ -339,4 +411,11 @@ function magazine_coming(b){
       bunny.tint = 0xFF0000;
       setTimeout(()=> heal_visiblity(b), 500);
     }
-  }
+    if(b.y == bunny.y - 50)
+{
+  app.stage.ticker.stop(b);
+  b.destroy;
+  b.splice(i);
+}
+}
+  
