@@ -38,24 +38,45 @@ bullet.y = screen.height-200;
 bullet.scale.set(1.4);
 app.stage.addChild(bullet);
 
+
 // Создание пулемета
-const magazine = 1000;
+let status = Boolean(false);
 const gun = [];
-let status = 0;
-for(let i = 0; i < magazine; i++)
-{
-const texture2 = PIXI.Texture.from('assets/bulletstorm.png');
-const bullet2 = PIXI.Sprite.from(texture2);
-bullet2.anchor.set(0.5);
-bullet2.visible = false;
-bullet2.tint = 0xFFD300;
-bullet2.scale.set(0.006);
-bullet2.interactive = true;
-bullet2.x = screen.width/2;
-bullet2.y = screen.height-200;
-gun.push(bullet2);
-app.stage.addChild(bullet2);
+let magazine = 50;
+var i = 1;        
+function GunLoop () {           
+setTimeout(function () { 
+  
+  const texture2 = PIXI.Texture.from('assets/bulletstorm.png');
+  const bullet2 = PIXI.Sprite.from(texture2);
+  bullet2.anchor.set(0.5);
+  bullet2.visible = false;
+  bullet2.tint = 0xFFD300;
+  bullet2.scale.set(0.01);
+  bullet2.interactive = true;
+  bullet2.x = screen.width/2;
+  bullet2.y = screen.height-200;
+  if(status == true)
+    {
+      app.stage.addChild(bullet2);
+      gun.push(bullet2);
+    }
+    
+  i++;                       
+    if (i < magazine) {                 
+    GunLoop();                           
+    }                                    
+  }, 2000)
 }
+GunLoop();
+
+if(status == true)
+{
+  setTimeout(() => {
+    status = false;
+  },4000);
+}
+
 
 // Создание ракеты
 const texture = PIXI.Texture.from('assets/rocket.png');
@@ -89,7 +110,7 @@ setTimeout(function () {
     astro.visible = false;
     astros.push(astro);
     app.stage.addChild(astro);;          
-    i++;                       
+    i++;                   
     if (i < lvltarget) {                 
     AstroLoop();                            
     }                                    
@@ -238,33 +259,6 @@ app.ticker.add(() => {
     setTimeout(() => magazine_coming(magaz),Time);} 
 })
 
-// Тикер пулемета
-app.ticker.add(() => {
-  if(status == 1)
-  {
-  for(let i = 0; i < gun.length; i++) {
-  const bullet2 = gun[i];
-  if(bunny.y == bullet2.y)
-bullet2.x = bunny.x;
-  if(bullet2.y !=0){
-  bullet2.y -= 20 * (i+i);
-  }
-  if (i == gun.length - 1){
-    status = 0;
-  }
-}
-  }
-  else
-  {
-    for(let i = 0; i < gun.length; i++) {
-      const bullet2 = gun[i];
-    bullet2.y = bunny.y;
-    }
-  }
-
-})
-
-
 // Функция исчезновения объекта (со счетчиком)
 function visiblity(a){
   if(a.interactive == true)
@@ -277,6 +271,7 @@ updateStatusMessage(pointText,Math.floor(pointtarget));
 // Функция исчезновения вещей
 function heal_visiblity(c){
   app.stage.removeChild(c);
+  c.interactive = false;
   bunny.tint = 0xFFFFFF;
   }
 
@@ -303,14 +298,13 @@ aBox.y < bBox.y + bBox.height;
 
 // Создание метеора в анимации и его реакции на объекты
 function meteor_coming(a,b){
-  
 a.visible = true;
 a.direction += a.turningSpeed * 0.04;
 a.rotation += Math.random() * 0.05;
 a.y += Math.random() * a.speed;
 
 if(life < 0)
-{ 
+{
   basicText.visible = true;
   bunny.texture = texture_boom;
   bunny.scale.set(0.4);
@@ -332,7 +326,7 @@ if (react(a, bullet)){
   a.texture = texture_boom;
   a.scale.set(0.1);
   a.tint = 0xFFFFFF;
-  setTimeout(() => visiblity(a),500);
+  setTimeout(() => visiblity(a),300);
   b.splice(i);
   
 if (delta == 0)
@@ -348,46 +342,44 @@ if(a.y == bunny.y + 50)
 }
 
 // Реакция пулемета на астеройды
-  if(status == 1)
-  {
-  bullet.y = bunny.y;
-  bullet.x = bunny.x;
+  
   for(let i = 0; i < gun.length; i++) {
   const bullet2 = gun[i];
-    bullet2.visible = true;
   if(bunny.y == bullet2.y)
-bullet2.x = bunny.x;
+    bullet2.x = bunny.x;
   if(bullet2.y !=0){
-    bullet2.y -= 10 + i;
-  }
-  if (i == gun.length - 1){
-    status = 0;
-    bullet.y -= 10;
-  }
-  if (react(a, bullet2)){
+    bullet2.y -= 0.5;
+    }
+    else if(bullet2.y == 0){
+    bullet2.y = screen.height-200;
+    }
+  console.log(bullet2.visible, gun.length)
+  if (react(a, bullet2) && bullet2.visible == true){
     a.texture = texture_boom;
     a.scale.set(0.1);
     a.tint = 0xFFFFFF;
     setTimeout(() => visiblity(a),200);}
-  }
-} 
-  else
-  {
-    for(let i = 0; i < gun.length; i++) {
-      const bullet2 = gun[i];
-    bullet2.y = bunny.y;
-    bullet2.visible = false;
+  if(status == true){
+  bullet.y = bunny.y;
+  bullet.x = bunny.x;
+  bullet2.visible = true;
     }
-  }
-}
+else {
+  app.stage.removeChild(bullet2)}
+  bullet.visible = true;
+  bullet.y -=10;
+} 
 
+
+
+}
 // Создание аптек в анимации и его реакция на объекты
 function heal_coming(b){
   b.visible = true;
   b.direction += b.turningSpeed * 0.04;
   b.y += Math.random() * b.speed;
   
-  if(react(b, bunny)&&life>0)
+  if(react(b, bunny)&&life>0&&b.interactive == true)
     { life += 0.018;
       bunny.tint = 0xFF0000;
       setTimeout(()=> heal_visiblity(b), 500);
@@ -406,8 +398,8 @@ function magazine_coming(b){
   b.visible = true;
   b.direction += b.turningSpeed * 0.04;
   b.y += Math.random() * b.speed;
-  if(react(b, bunny))
-    { status = 1;
+  if(react(b, bunny)&&b.interactive == true)
+    { status = true;
       bunny.tint = 0xFF0000;
       setTimeout(()=> heal_visiblity(b), 500);
     }
