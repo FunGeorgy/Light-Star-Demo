@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js'
 import anime from 'animejs/lib/anime.es.js';
+import PixiApngAndGif from 'pixi-apngandgif';
 
 // Основные параметры приложения
 const app = new PIXI.Application({
@@ -11,22 +12,111 @@ view: document.querySelector('#scene'),
 resolution: window.devicePixelRatio || 1
 });
 
+const loader = PIXI.Loader.shared,
+    title = document.title,
+    loadOption = {
+        loadType: PIXI.LoaderResource.LOAD_TYPE.XHR,
+        xhrType: PIXI.LoaderResource.XHR_RESPONSE_TYPE.BUFFER,
+        crossOrigin:''
+    },
+    imgs = {
+        rocket:'assets/rocket2.gif',
+        booms: 'assets/boom2.gif',
+    };
 
 
+loader.add(imgs.rocket,loadOption);
+loader.add(imgs.booms,loadOption);
+
+document.body.appendChild(app.view);
+
+loader.on('progress',(loader,resoure)=>{
+  document.title = Math.round(loader.progress);
+}).load((progress,resources)=>{
+document.title = title;
 
 // Картинка заднего фона
-const background_image = PIXI.Texture.from('assets/stars.jpg');
+const background_image = PIXI.Texture.from('assets/back2.jpg');
 const back = new PIXI.Sprite(background_image);
 back.anchor.x = 0;
 back.anchor.y = 0;
-back.scale.set(1.75);
+back.scale.set(0.7);
 back.position.x = 0;
 back.position.y = 0;
+back.alpha = Math.sin(0.80);
 app.stage.addChild(back);
+
+// Звезды
+
+const starTexture = PIXI.Texture.from('assets/star.png');
+
+const starAmount = 1000;
+let cameraZ = 0;
+const fov = 20;
+const baseSpeed = 0.025;
+let speed = 0;
+let warpSpeed = 0;
+const starStretch = 5;
+const starBaseSize = 0.2;
+
+
+// Создание звезд
+const stars = [];
+for (let i = 0; i < starAmount; i++) {
+    const star = {
+        sprite: new PIXI.Sprite(starTexture),
+        z: 0,
+        x: 0,
+        y: 0,
+    };
+    star.alpha = Math.sin(0.80);
+    star.sprite.anchor.x = 0.5;
+    star.sprite.anchor.y = 0.7;
+    randomizeStar(star, true);
+    app.stage.addChild(star.sprite);
+    stars.push(star);
+}
+
+function randomizeStar(star, initial) {
+    star.z = initial ? Math.random() * 500 : cameraZ + Math.random() * 250 + 500;
+
+    // Подсчет дистанции звезд относительно камере
+    const deg = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 100 + 1;
+    star.x = Math.cos(deg) * distance;
+    star.y = Math.sin(deg) * distance;
+}
+
+// Создание метеоритов
+const astros = [];
+var check = new Boolean(false); 
+let lvltarget = 1000;
+var i = 1;                    
+function AstroLoop () {           
+setTimeout(function () { 
+    const astro = PIXI.Sprite.from('/assets/astero.png');
+    astro.interactive = true;
+    astro.buttonMode = true;
+    astro.anchor.set(0.5);
+    astro.scale.set(0.1 + Math.random() * 0.3);
+    astro.x = Math.random() * app.screen.width;
+    astro.turningSpeed = Math.random() - 0.8;
+    astro.y = 0;
+    astro.speed = 1 + Math.random() * 2;
+    astro.tint = Math.random() * 0xFFFFFF;
+    astro.visible = false;
+    astros.push(astro);
+    app.stage.addChild(astro);;          
+    i++;                   
+    if (i < lvltarget) {                 
+    AstroLoop();                            
+    }                                    
+  }, Math.random() * 5000)
+}
+AstroLoop();
 
 // Создание взрыва
 const texture_boom = PIXI.Texture.from('assets/boom.png')
-const boom = new PIXI.Sprite(texture_boom);
 
 // Создание пули
 const texture2 = PIXI.Texture.from('assets/bullet.png');
@@ -34,10 +124,9 @@ const bullet = PIXI.Sprite.from(texture2);
 bullet.anchor.set(0.5);
 bullet.interactive = true;
 bullet.x = screen.width/2;
-bullet.y = screen.height-200;
+bullet.y = app.screen.height-200;
 bullet.scale.set(1.4);
 app.stage.addChild(bullet);
-
 
 // Создание пулемета
 let status = Boolean(false);
@@ -66,57 +155,36 @@ setTimeout(function () {
     if (i < magazine) {                 
     GunLoop();                           
     }                                    
-  }, 2000)
+  }, 1500)
 }
 GunLoop();
 
-if(status == true)
-{
-  setTimeout(() => {
-    status = false;
-  },4000);
-}
-
-
 // Создание ракеты
-const texture = PIXI.Texture.from('assets/rocket.png');
-const bunny = new PIXI.Sprite(texture);
+window.rocket = new PixiApngAndGif(imgs.rocket,resources);
+let bunny = window.rocket.sprite;
 bunny.anchor.set(0.5);
-bunny.scale.set(0.05);
 bunny.x = bullet.x;
-bunny.y = bullet.y
+bunny.y = bullet.y;
 app.stage.addChild(bunny);
 let delta = 0;
 let bool = 0;
 
+// Создание Взрывов
+let boomcounter = [];
+let m = 0;
+let check_boom = Boolean(true);
+for(i = 0; i < 10; i++){
+window.booms = new PixiApngAndGif(imgs.booms,resources);
+let boom = window.booms.sprite;
+boom.anchor.set(0.5);
+boom.visible = false;
+boom.x = 0;
+boom.y = 0;
+boom.zIndex = 1000000000;
+app.stage.addChild(boom);
+boomcounter.push(boom);}
 
-// Создание метеоритов
-const astros = [];
-var check = new Boolean(false); 
-let lvltarget = 1000;
-var i = 1;                    
-function AstroLoop () {           
-setTimeout(function () { 
-    const astro = PIXI.Sprite.from('/assets/astero.png');
-    astro.interactive = true;
-    astro.buttonMode = true;
-    astro.anchor.set(0.5);
-    astro.scale.set(0.1 + Math.random() * 0.3);
-    astro.x = Math.random() * app.screen.width;
-    astro.turningSpeed = Math.random() - 0.8;
-    astro.y = 0;
-    astro.speed = 1 + Math.random() * 2;
-    astro.tint = Math.random() * 0xFFFFFF;
-    astro.visible = false;
-    astros.push(astro);
-    app.stage.addChild(astro);;          
-    i++;                   
-    if (i < lvltarget) {                 
-    AstroLoop();                            
-    }                                    
-  }, Math.random() * 2000)
-}
-AstroLoop();
+
 
 // Созднание аптек
 const heals = [];
@@ -139,7 +207,7 @@ setTimeout(function () {
     if (i < lvltarget2) {                 
     HealLoop();                            
     }                                    
-  },  Math.random() * (20000 - 10000) + 10000)
+  },  Math.random() * (40000 - 10000) + 20000)
 }
 HealLoop();
 
@@ -164,7 +232,7 @@ setTimeout(function () {
     if (i < lvltarget3) {                 
     MagazineLoop();                            
     }                                    
-  }, Math.random() * (20000 - 10000) + 10000)
+  }, Math.random() * (60000 - 10000) + 20000)
 }
 MagazineLoop();
 
@@ -214,24 +282,67 @@ function updateStatusMessage(Sometext, sometarget) {
   Sometext.text = sometarget;
 }
 
+// Переменная для считываения координат мышки
+
+const mouseCoords = app.renderer.plugins.interaction.mouse.global;
+
+// Анимация тикера для звезд
+app.ticker.add((delta) => {
+  
+  speed += (warpSpeed - speed) / 20;
+  cameraZ += delta * 10 * (speed + baseSpeed);
+  for (let i = 0; i < starAmount; i++) {
+      const star = stars[i];
+      if (star.z < cameraZ) randomizeStar(star);
+
+      // Карта 3D проецирования для звезд
+      const z = star.z - cameraZ;
+      star.sprite.x = star.x * (fov / z) * app.renderer.screen.width + app.renderer.screen.width / 2;
+      star.sprite.y = star.y * (fov / z) * app.renderer.screen.width + app.renderer.screen.height / 2;
+
+      // Рахмер звезд и их вращение
+      const dxCenter = star.sprite.x - app.renderer.screen.width / 2;
+      const dyCenter = star.sprite.y - app.renderer.screen.height / 2;
+      const distanceCenter = Math.sqrt(dxCenter * dxCenter + dyCenter * dyCenter);
+      const distanceScale = Math.max(0, (2000 - z) / 2000);
+      star.sprite.scale.x = distanceScale * starBaseSize;
+      
+      // Движения звезд от центра к краю
+      star.sprite.scale.y = distanceScale * starBaseSize + distanceScale * speed * starStretch * distanceCenter / app.renderer.screen.width;
+      star.sprite.rotation = Math.atan2(dyCenter, dxCenter) + Math.PI / 2;
+  }
+});
+
 // Тикер анимации ракеты и ее пули
 app.ticker.add(() => {
-const mouseCoords = app.renderer.plugins.interaction.mouse.global;
-if(life > 0){
-bunny.x = mouseCoords.x;
+
+if (basicText.x > bunny.x)
+  {
+    bunny.rotation = -0.06;
+  }
+else if (basicText.x < bunny.x)
+{
+  bunny.rotation =  0.06;
 }
-if(bunny.y == bullet.y)
-bullet.x = bunny.x;
+else if(basicText.x == bunny.x)
+{
+  bunny.rotation = 0;
+}
 
-if(bullet.y !=0){
-  bullet.y -= 10;
+if(life > 0){
+  bunny.x = mouseCoords.x;
+  
   }
-  else if(bullet.y == 0){
-  bullet.y = screen.height-200;
-  }
+  if(bunny.y == bullet.y)
+  bullet.x = bunny.x;
+  
+  if(bullet.y !=0){
+    bullet.y -= 10;
+    }
+    else if(bullet.y == 0){
+    bullet.y = screen.height-200;
+    }
 })
-
-
 
 // Тикер анимации для метеоритов и других падающих объектов
 // Тикер для падения метеоритов
@@ -241,6 +352,7 @@ app.ticker.add(() => {
     const astro = astros[i];
     let Time = i + Math.random()*400;
     setTimeout(() => meteor_coming(astro, astros),Time);} 
+    console.log("Status",status, "Размер массива",gun.length)
 });
 
 // Тикер падения аптечек
@@ -253,6 +365,7 @@ app.ticker.add(() => {
 
 // Тикер падения магазинов
 app.ticker.add(() => {
+  
   for (let i = 0; i < magazines.length; i++) {
     const magaz = magazines[i];
     let Time = i + Math.random()*400;
@@ -261,8 +374,9 @@ app.ticker.add(() => {
 
 // Функция исчезновения объекта (со счетчиком)
 function visiblity(a){
-  if(a.interactive == true)
-  pointtarget++;
+if(a.interactive == true)
+pointtarget++;
+check_boom = false;
 a.interactive = false;
 app.stage.removeChild(a);
 updateStatusMessage(pointText,Math.floor(pointtarget));
@@ -273,6 +387,7 @@ function heal_visiblity(c){
   app.stage.removeChild(c);
   c.interactive = false;
   bunny.tint = 0xFFFFFF;
+  check = false;
   }
 
 
@@ -303,6 +418,7 @@ a.direction += a.turningSpeed * 0.04;
 a.rotation += Math.random() * 0.05;
 a.y += Math.random() * a.speed;
 
+
 if(life < 0)
 {
   basicText.visible = true;
@@ -321,17 +437,27 @@ else if(react(a, bunny) && life > 0 && a.interactive == true)
     setTimeout(function status(){bool = 1; bunny.alpha = 1;},2000);
     updateStatusMessage(lifeText, Math.floor(life));
     }
-if (react(a, bullet)){
-  check = true;
-  a.texture = texture_boom;
-  a.scale.set(0.1);
-  a.tint = 0xFFFFFF;
-  setTimeout(() => visiblity(a),300);
+if (react(a, bullet) && a.interactive == true){
+  let boom = boomcounter[m];
+  a.scale.set(0.01)
+  a.visible = false;
+  boom.x = a.x;
+  boom.y = a.y
+  boom.visible = true;
+  setTimeout(() => visiblity(a),500);
   b.splice(i);
+  m++;
+  console.log('элемент массива взрыва',m,'булевая',check_boom)
+  setTimeout(() => {
+    boom.visible = false;
+  }, 500);
   
+
 if (delta == 0)
   delta += 0.1;
-  }
+if(m == boomcounter.length-1)
+m = 0;
+}
 if(a.y == bunny.y + 50)
 {
   a.interactive = false;
@@ -348,29 +474,31 @@ if(a.y == bunny.y + 50)
   if(bunny.y == bullet2.y)
     bullet2.x = bunny.x;
   if(bullet2.y !=0){
-    bullet2.y -= 0.5;
+    bullet2.y -= 5;
     }
     else if(bullet2.y == 0){
-    bullet2.y = screen.height-200;
+    bullet2.y = bunny.y;
     }
-  console.log(bullet2.visible, gun.length)
   if (react(a, bullet2) && bullet2.visible == true){
     a.texture = texture_boom;
+    a.rotation -= Math.random() * 0.05;;;
     a.scale.set(0.1);
     a.tint = 0xFFFFFF;
     setTimeout(() => visiblity(a),200);}
   if(status == true){
-  bullet.y = bunny.y;
-  bullet.x = bunny.x;
+  bullet.visible = false;
   bullet2.visible = true;
-    }
-else {
-  app.stage.removeChild(bullet2)}
+  setTimeout(() => {
+    status = false;
+  },10000);
+  
+}
+if(status == false)
+{ bullet2.y = bunny.y;
+  bullet2.visible = false; 
   bullet.visible = true;
-  bullet.y -=10;
+}
 } 
-
-
 
 }
 // Создание аптек в анимации и его реакция на объекты
@@ -398,8 +526,9 @@ function magazine_coming(b){
   b.visible = true;
   b.direction += b.turningSpeed * 0.04;
   b.y += Math.random() * b.speed;
-  if(react(b, bunny)&&b.interactive == true)
+  if(react(b, bunny)&&b.interactive == true && life > 0)
     { status = true;
+      check = true;
       bunny.tint = 0xFF0000;
       setTimeout(()=> heal_visiblity(b), 500);
     }
@@ -410,4 +539,4 @@ function magazine_coming(b){
   b.splice(i);
 }
 }
-  
+});

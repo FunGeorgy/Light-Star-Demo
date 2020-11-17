@@ -18,6 +18,7 @@
     "@babel/runtime": "^7.8.4",
     "animejs": "^3.2.1",
     "core-js": "^3.6.4",
+    "pixi-apngandgif": "^1.0.2",
     "pixi.js": "^5.2.1"
   },
   "devDependencies": {
