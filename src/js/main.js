@@ -6,7 +6,7 @@ import PixiApngAndGif from 'pixi-apngandgif';
 const app = new PIXI.Application({
 width: screen.width,
 height: screen.height,
-backgroundColor: 0x1099bb,
+backgroundColor: 0x0033ff,
 
 view: document.querySelector('#scene'),
 resolution: window.devicePixelRatio || 1
@@ -88,22 +88,31 @@ function randomizeStar(star, initial) {
 }
 
 // Создание метеоритов
+
+const astrosFrames = [
+  '/assets/astro2.png',
+  '/assets/astro3.png',
+  '/assets/astro4.png',
+  '/assets/astro.png',
+]
 const astros = [];
 var check = new Boolean(false); 
 let lvltarget = 1000;
-var i = 1;                    
+let level = 1;
+var i = 1;  
+let timer = 5000;        
 function AstroLoop () {           
-setTimeout(function () { 
-    const astro = PIXI.Sprite.from('/assets/astero.png');
+setTimeout(function () {
+    const asteroid = astrosFrames[i%4];
+    const astro = PIXI.Sprite.from(asteroid);
     astro.interactive = true;
     astro.buttonMode = true;
     astro.anchor.set(0.5);
-    astro.scale.set(0.1 + Math.random() * 0.3);
+    astro.scale.set(0.1 + Math.random() * 0.4);
     astro.x = Math.random() * app.screen.width;
     astro.turningSpeed = Math.random() - 0.8;
     astro.y = 0;
-    astro.speed = 1 + Math.random() * 2;
-    astro.tint = Math.random() * 0xFFFFFF;
+    astro.speed = 1 + Math.random() * level;
     astro.visible = false;
     astros.push(astro);
     app.stage.addChild(astro);;          
@@ -111,9 +120,10 @@ setTimeout(function () {
     if (i < lvltarget) {                 
     AstroLoop();                            
     }                                    
-  }, Math.random() * 5000)
+  }, Math.random() * timer)
 }
 AstroLoop();
+
 
 // Создание взрыва
 const texture_boom = PIXI.Texture.from('assets/boom.png')
@@ -123,7 +133,7 @@ const texture2 = PIXI.Texture.from('assets/bullet.png');
 const bullet = PIXI.Sprite.from(texture2);
 bullet.anchor.set(0.5);
 bullet.interactive = true;
-bullet.x = screen.width/2;
+bullet.x = app.screen.width/2;
 bullet.y = app.screen.height-200;
 bullet.scale.set(1.4);
 app.stage.addChild(bullet);
@@ -143,8 +153,8 @@ setTimeout(function () {
   bullet2.tint = 0xFFD300;
   bullet2.scale.set(0.01);
   bullet2.interactive = true;
-  bullet2.x = screen.width/2;
-  bullet2.y = screen.height-200;
+  bullet2.x = app.screen.width/2;
+  bullet2.y = app.screen.height-200;
   if(status == true)
     {
       app.stage.addChild(bullet2);
@@ -155,7 +165,7 @@ setTimeout(function () {
     if (i < magazine) {                 
     GunLoop();                           
     }                                    
-  }, 1500)
+  }, 2000)
 }
 GunLoop();
 
@@ -183,8 +193,6 @@ boom.y = 0;
 boom.zIndex = 1000000000;
 app.stage.addChild(boom);
 boomcounter.push(boom);}
-
-
 
 // Созднание аптек
 const heals = [];
@@ -237,13 +245,30 @@ setTimeout(function () {
 MagazineLoop();
 
 // Текст
-const style = new PIXI.TextStyle({
-  fill: ['#ffffff', '#FF0000'],
+  const style = new PIXI.TextStyle({
+    fontFamily: 'Perpetua Titling MT',
+    fontSize: 36,
+    fontWeight: 'bold',
+    fill: ['#ffffff', '#FF0000'],
+    stroke: '#4a1850',
+    strokeThickness: 5,
+    dropShadow: true,
+    dropShadowColor: '#000000',
+    dropShadowBlur: 4,
+    dropShadowAngle: Math.PI / 6,
+    dropShadowDistance: 6,
+    wordWrap: true,
+    wordWrapWidth: 440,
+    lineJoin: 'round'
 });
+  
+
 // Game over
 const basicText = new PIXI.Text('Game Over', style);
-basicText.x = screen.width/2;
-basicText.y = screen.height/3;
+basicText.anchor.set(0.5);
+basicText.scale.set(2);
+basicText.x = app.screen.width/2;
+basicText.y = app.screen.height/3;
 basicText.visible = false;
 basicText.zIndex = 10;
 app.stage.addChild(basicText);
@@ -252,30 +277,69 @@ app.stage.addChild(basicText);
 let pointtarget = 0;
 const pointText = new PIXI.Text(pointtarget, style);
 basicText.fill = ['#ffffff'];
-pointText.x = screen.width/7;
-pointText.y = screen.height/6;
+pointText.x = app.screen.width/7;
+pointText.y = app.screen.height/6;
 pointText.zIndex = 10;
 app.stage.addChild(pointText);
 
-const pointText2 = new PIXI.Text('Счет:', style)
-pointText2.x = pointText.x - 100;
-pointText2.y = screen.height/6;
+const pointText2 = new PIXI.Text('SCORE:', style)
+pointText2.x = pointText.x - 150;
+pointText2.y = app.screen.height/6;
 pointText2.zIndex = 10;
 app.stage.addChild(pointText2);
 
 // Текст жизни
 let life = 3;
 const lifeText = new PIXI.Text(life, style);
-lifeText.x = screen.width/7;
-lifeText.y = screen.height/5;
+lifeText.x = app.screen.width/7;
+lifeText.y = app.screen.height/5;
 lifeText.zIndex = 10;
 app.stage.addChild(lifeText);
 
-const lifeText2 = new PIXI.Text('Жизнь:', style)
-lifeText2.x = lifeText.x - 100;
-lifeText2.y = screen.height/5;
+const lifeText2 = new PIXI.Text('TOTAL LIFES:', style)
+lifeText2.x = lifeText.x - 260;
+lifeText2.y = app.screen.height/5;
 lifeText2.zIndex = 10;
 app.stage.addChild(lifeText2);
+
+// Уровни
+
+let scale = 0;
+const lvlText = new PIXI.Text('LEVEL', style)
+lvlText.anchor.set(0.5);
+lvlText.scale.set(1.5);
+lvlText.x = app.screen.width/2;
+lvlText.y = app.screen.height/3;
+lvlText.alpha = Math.sin(0);
+lvlText.zIndex = 10;
+app.stage.addChild(lvlText);
+
+const lvlText2 = new PIXI.Text(level, style)
+lvlText2.anchor.set(0.5);
+lvlText2.scale.set(1.5);
+lvlText2.x = 200 + lvlText.x;
+lvlText2.y = app.screen.height/3;
+lvlText2.alpha = Math.sin(0);
+lvlText2.zIndex = 10;
+app.stage.addChild(lvlText2);
+
+// Шкала
+
+// const ScaleTexture = new PIXI.Texture.from("assets/scale1.png")
+// const ScaleGun = new PIXI.TilingSprite(
+//   ScaleTexture,
+//   200,
+//   20,
+// );
+
+let ScaleGun_Count = 0;
+
+const ScaleGun = new PIXI.NineSlicePlane(PIXI.Texture.from('assets/scale1.png'), 10, 10, 10, 10);
+  
+ScaleGun.x = lifeText.x;
+ScaleGun.y = bunny.y;
+
+app.stage.addChild(ScaleGun);
 
 // Функция обновления тикера сообщения
 function updateStatusMessage(Sometext, sometarget) {
@@ -294,7 +358,6 @@ app.ticker.add((delta) => {
   for (let i = 0; i < starAmount; i++) {
       const star = stars[i];
       if (star.z < cameraZ) randomizeStar(star);
-
       // Карта 3D проецирования для звезд
       const z = star.z - cameraZ;
       star.sprite.x = star.x * (fov / z) * app.renderer.screen.width + app.renderer.screen.width / 2;
@@ -313,6 +376,23 @@ app.ticker.add((delta) => {
   }
 });
 
+app.ticker.add(() => {
+  
+if(pointtarget == level*10 + Math.floor(scale))
+{
+  level = Math.floor(level)+1;
+  updateStatusMessage(lvlText2,level);
+  lvlText.alpha = 1;
+  lvlText2.alpha = 1;
+  setTimeout(() => {
+    lvlText.alpha = 0;
+    lvlText2.alpha = 0; 
+    if(timer > 400){timer -= 450 }},3000)
+} 
+if(level > 2)
+scale = scale + 0.0005;
+console.log('таймер',timer);
+})
 // Тикер анимации ракеты и ее пули
 app.ticker.add(() => {
 
@@ -340,7 +420,7 @@ if(life > 0){
     bullet.y -= 10;
     }
     else if(bullet.y == 0){
-    bullet.y = screen.height-200;
+    bullet.y = app.screen.height-200;
     }
 })
 
@@ -422,12 +502,20 @@ a.y += Math.random() * a.speed;
 if(life < 0)
 {
   basicText.visible = true;
-  bunny.texture = texture_boom;
-  bunny.scale.set(0.4);
+  let boom = boomcounter[m];
+  bunny.scale.set(0.01)
+  bunny.visible = false;
+  boom.x = bunny.x;
+  boom.y = bunny.y
+  boom.scale.set(1.5)
+  boom.visible = true;
   bullet.y = 0;
   bullet.alpha = 0;
   updateStatusMessage(lifeText, 0);
-  
+  setTimeout(() => {
+    boom.visible = false;
+  }, 800);
+  life = 0;
 }
 else if(react(a, bunny) && life > 0 && a.interactive == true)
   { 
@@ -471,17 +559,17 @@ if(a.y == bunny.y + 50)
   
   for(let i = 0; i < gun.length; i++) {
   const bullet2 = gun[i];
-  if(bunny.y == bullet2.y)
+  if(bunny.y > bullet2.y)
     bullet2.x = bunny.x;
   if(bullet2.y !=0){
-    bullet2.y -= 5;
-    }
-    else if(bullet2.y == 0){
-    bullet2.y = bunny.y;
-    }
+  bullet2.y -= 5;
+  }
+  else {
+  bullet2.y = app.screen.height-300;
+  }
   if (react(a, bullet2) && bullet2.visible == true){
     a.texture = texture_boom;
-    a.rotation -= Math.random() * 0.05;;;
+    a.rotation -= Math.random() * 0.05;
     a.scale.set(0.1);
     a.tint = 0xFFFFFF;
     setTimeout(() => visiblity(a),200);}
@@ -539,4 +627,6 @@ function magazine_coming(b){
   b.splice(i);
 }
 }
+
+// Anime.Js Анимации 
 });
