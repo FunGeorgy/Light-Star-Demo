@@ -20,7 +20,7 @@ const loader = PIXI.Loader.shared,
         crossOrigin:''
     },
     imgs = {
-        rocket:'assets/rocket2.gif',
+        rocket:'assets/rocket4.gif',
         booms: 'assets/boom2.gif',
     };
 
@@ -34,6 +34,26 @@ loader.on('progress',(loader,resoure)=>{
   document.title = Math.round(loader.progress);
 }).load((progress,resources)=>{
 document.title = title;
+
+// Меню выбора
+// Стиль текстов
+const style = new PIXI.TextStyle({
+  fontFamily: 'Perpetua Titling MT',
+  fontSize: 36,
+  fontWeight: 'bold',
+  fill: ['#ffffff', '#FF0000'],
+  stroke: '#4a1850',
+  strokeThickness: 5,
+  dropShadow: true,
+  dropShadowColor: '#000000',
+  dropShadowBlur: 4,
+  dropShadowAngle: Math.PI / 6,
+  dropShadowDistance: 6,
+  wordWrap: true,
+  wordWrapWidth: 440,
+  lineJoin: 'round'
+});
+
 
 // Картинка заднего фона
 const background_image = PIXI.Texture.from('assets/back2.jpg');
@@ -79,13 +99,98 @@ for (let i = 0; i < starAmount; i++) {
 
 function randomizeStar(star, initial) {
     star.z = initial ? Math.random() * 500 : cameraZ + Math.random() * 250 + 500;
-
-    // Подсчет дистанции звезд относительно камере
+    // Подсчет дистанции звезд относительно камеры
     const deg = Math.random() * Math.PI * 2;
     const distance = Math.random() * 100 + 1;
     star.x = Math.cos(deg) * distance;
     star.y = Math.sin(deg) * distance;
 }
+
+// Создание ракеты
+    window.rocket = new PixiApngAndGif(imgs.rocket,resources);
+    let startRocket = window.rocket.sprite;
+    startRocket.anchor.set(0.5);
+    startRocket.x = app.screen.width/3;
+    startRocket.y = app.screen.height/1.4;
+    startRocket.rotation = 0.5;
+    startRocket.scale.set(0.5);
+    app.stage.addChild(startRocket);
+
+
+// Начать игру
+const startText = new PIXI.Text('Start', style);
+startText.anchor.set(0.5);
+startText.scale.set(2);
+startText.x = app.screen.width/2;
+startText.y = app.screen.height/3.5;
+startText.visible = true;
+startText.zIndex = 10;
+startText.interactive = true;
+startText.buttonMode = true;
+startText.on('pointerdown', onClickstartText);
+app.stage.addChild(startText);
+function onClickstartText(){
+  startText.alpha = 0;
+  optionText.alpha = 0;
+  startRocket.alpha = 0;
+  AlsoGame();
+}
+
+// Опции
+const optionText = new PIXI.Text('Options', style);
+optionText.anchor.set(0.5);
+optionText.scale.set(2);
+optionText.x = app.screen.width/2;
+optionText.y = app.screen.height/2;
+optionText.zIndex = 10;
+app.stage.addChild(optionText);
+
+// Анимация тикера для звезд
+app.ticker.add((delta) => {
+  
+  speed += (warpSpeed - speed) / 20;
+  cameraZ += delta * 10 * (speed + baseSpeed);
+  for (let i = 0; i < starAmount; i++) {
+      const star = stars[i];
+      if (star.z < cameraZ) randomizeStar(star);
+      // Карта 3D проецирования для звезд
+      const z = star.z - cameraZ;
+      star.sprite.x = star.x * (fov / z) * app.renderer.screen.width + app.renderer.screen.width / 2;
+      star.sprite.y = star.y * (fov / z) * app.renderer.screen.width + app.renderer.screen.height / 2;
+      star.y += 0.01;
+
+      // 
+      // Рахмер звезд и их вращение
+      const dxCenter = star.sprite.x - app.renderer.screen.width / 2;
+      const dyCenter = star.sprite.y - app.renderer.screen.height / 2;
+      const distanceCenter = Math.sqrt(dxCenter * dxCenter + dyCenter * dyCenter);
+      const distanceScale = Math.max(0, (2000 - z) / 2000);
+      star.sprite.scale.x = distanceScale * starBaseSize;
+      
+      // Движения звезд от центра к краю
+      star.sprite.scale.y = distanceScale * starBaseSize + distanceScale * speed * starStretch * distanceCenter / app.renderer.screen.width;
+      star.sprite.rotation = Math.atan2(dyCenter, dxCenter) + Math.PI / 2;
+  }
+});
+
+app.ticker.add(() =>{
+  startRocket.y -= Math.random() * 2;
+  startRocket.x += 0.5;
+
+  if(startRocket.y < -100)
+  {
+  startRocket.y = app.screen.height;
+  startRocket.x = Math.random() * app.screen.width;
+  }
+})
+
+// Сама игра
+function AlsoGame(){
+const GameContainer = new PIXI.Container();
+GameContainer.visible = true;
+app.stage.interactive = true;
+app.stage.addChild(GameContainer);
+GameContainer.off();
 
 // Создание метеоритов
 
@@ -115,7 +220,7 @@ setTimeout(function () {
     astro.speed = 1 + Math.random() * level;
     astro.visible = false;
     astros.push(astro);
-    app.stage.addChild(astro);;          
+    GameContainer.addChild(astro);;          
     i++;                   
     if (i < lvltarget) {                 
     AstroLoop();                            
@@ -136,7 +241,7 @@ bullet.interactive = true;
 bullet.x = app.screen.width/2;
 bullet.y = app.screen.height-200;
 bullet.scale.set(1.4);
-app.stage.addChild(bullet);
+GameContainer.addChild(bullet);
 
 // Создание пулемета
 let status = Boolean(false);
@@ -149,18 +254,15 @@ setTimeout(function () {
   const texture2 = PIXI.Texture.from('assets/bulletstorm.png');
   const bullet2 = PIXI.Sprite.from(texture2);
   bullet2.anchor.set(0.5);
-  bullet2.visible = false;
   bullet2.tint = 0xFFD300;
   bullet2.scale.set(0.01);
   bullet2.interactive = true;
   bullet2.x = app.screen.width/2;
   bullet2.y = app.screen.height-200;
-  if(status == true)
-    {
-      app.stage.addChild(bullet2);
-      gun.push(bullet2);
-    }
-    
+  bullet2.alpha = 0;
+  if(gun.length < 10)
+  gun.push(bullet2)
+  GameContainer.addChild(bullet2);  
   i++;                       
     if (i < magazine) {                 
     GunLoop();                           
@@ -173,9 +275,10 @@ GunLoop();
 window.rocket = new PixiApngAndGif(imgs.rocket,resources);
 let bunny = window.rocket.sprite;
 bunny.anchor.set(0.5);
+bunny.scale.set(0.5);
 bunny.x = bullet.x;
 bunny.y = bullet.y;
-app.stage.addChild(bunny);
+GameContainer.addChild(bunny);
 let delta = 0;
 let bool = 0;
 
@@ -191,7 +294,7 @@ boom.visible = false;
 boom.x = 0;
 boom.y = 0;
 boom.zIndex = 1000000000;
-app.stage.addChild(boom);
+GameContainer.addChild(boom);
 boomcounter.push(boom);}
 
 // Созднание аптек
@@ -210,7 +313,7 @@ setTimeout(function () {
     healpoint.speed = 1 + Math.random() * 2;
     healpoint.visible = false;
     heals.push(healpoint);
-    app.stage.addChild(healpoint);;          
+    GameContainer.addChild(healpoint);;          
     i++;                      
     if (i < lvltarget2) {                 
     HealLoop();                            
@@ -235,7 +338,7 @@ setTimeout(function () {
     magaz.speed = 1 + Math.random() * 2;
     magaz.visible = false;
     magazines.push(magaz);
-    app.stage.addChild(magaz);;          
+    GameContainer.addChild(magaz);;          
     i++;                              
     if (i < lvltarget3) {                 
     MagazineLoop();                            
@@ -244,103 +347,119 @@ setTimeout(function () {
 }
 MagazineLoop();
 
-// Текст
-  const style = new PIXI.TextStyle({
-    fontFamily: 'Perpetua Titling MT',
-    fontSize: 36,
-    fontWeight: 'bold',
-    fill: ['#ffffff', '#FF0000'],
-    stroke: '#4a1850',
-    strokeThickness: 5,
-    dropShadow: true,
-    dropShadowColor: '#000000',
-    dropShadowBlur: 4,
-    dropShadowAngle: Math.PI / 6,
-    dropShadowDistance: 6,
-    wordWrap: true,
-    wordWrapWidth: 440,
-    lineJoin: 'round'
+// Текст в игре
+
+// Стиль Шрифта
+const style2 = new PIXI.TextStyle({
+  fontFamily: 'Perpetua Titling MT',
+  fontSize: 36,
+  fontWeight: 'bold',
+  fill: ['#ffffff', '#FF0000'],
+  stroke: '#4a1850',
+  strokeThickness: 5,
+  dropShadow: true,
+  dropShadowColor: '#000000',
+  dropShadowBlur: 4,
+  dropShadowAngle: Math.PI / 6,
+  dropShadowDistance: 6,
+  wordWrap: true,
+  wordWrapWidth: 440,
+  lineJoin: 'round'
 });
-  
 
 // Game over
-const basicText = new PIXI.Text('Game Over', style);
+const basicText = new PIXI.Text('Game Over', style2);
 basicText.anchor.set(0.5);
 basicText.scale.set(2);
 basicText.x = app.screen.width/2;
 basicText.y = app.screen.height/3;
 basicText.visible = false;
 basicText.zIndex = 10;
-app.stage.addChild(basicText);
+GameContainer.addChild(basicText);
 
 // Текст очков
 let pointtarget = 0;
-const pointText = new PIXI.Text(pointtarget, style);
+const pointText = new PIXI.Text(pointtarget, style2);
 basicText.fill = ['#ffffff'];
 pointText.x = app.screen.width/7;
 pointText.y = app.screen.height/6;
 pointText.zIndex = 10;
-app.stage.addChild(pointText);
+GameContainer.addChild(pointText);
 
-const pointText2 = new PIXI.Text('SCORE:', style)
+const pointText2 = new PIXI.Text('SCORE:', style2)
 pointText2.x = pointText.x - 150;
 pointText2.y = app.screen.height/6;
 pointText2.zIndex = 10;
-app.stage.addChild(pointText2);
+GameContainer.addChild(pointText2);
 
 // Текст жизни
 let life = 3;
-const lifeText = new PIXI.Text(life, style);
+const lifeText = new PIXI.Text(life, style2);
 lifeText.x = app.screen.width/7;
 lifeText.y = app.screen.height/5;
 lifeText.zIndex = 10;
-app.stage.addChild(lifeText);
+GameContainer.addChild(lifeText);
 
-const lifeText2 = new PIXI.Text('TOTAL LIFES:', style)
+const lifeText2 = new PIXI.Text('TOTAL LIFES:', style2)
 lifeText2.x = lifeText.x - 260;
 lifeText2.y = app.screen.height/5;
 lifeText2.zIndex = 10;
-app.stage.addChild(lifeText2);
+GameContainer.addChild(lifeText2);
 
 // Уровни
 
 let scale = 0;
-const lvlText = new PIXI.Text('LEVEL', style)
+const lvlText = new PIXI.Text('LEVEL', style2)
 lvlText.anchor.set(0.5);
 lvlText.scale.set(1.5);
 lvlText.x = app.screen.width/2;
 lvlText.y = app.screen.height/3;
 lvlText.alpha = Math.sin(0);
 lvlText.zIndex = 10;
-app.stage.addChild(lvlText);
+GameContainer.addChild(lvlText);
 
-const lvlText2 = new PIXI.Text(level, style)
+const lvlText2 = new PIXI.Text(level, style2)
 lvlText2.anchor.set(0.5);
 lvlText2.scale.set(1.5);
 lvlText2.x = 200 + lvlText.x;
 lvlText2.y = app.screen.height/3;
 lvlText2.alpha = Math.sin(0);
 lvlText2.zIndex = 10;
-app.stage.addChild(lvlText2);
+GameContainer.addChild(lvlText2);
 
 // Шкала
 
-// const ScaleTexture = new PIXI.Texture.from("assets/scale1.png")
-// const ScaleGun = new PIXI.TilingSprite(
-//   ScaleTexture,
-//   200,
-//   20,
-// );
+let ScaleContainer = new PIXI.Container();
+GameContainer.addChild(ScaleContainer);
+ScaleContainer.x = lifeText.x - 260;;
+ScaleContainer.y = app.screen.height/1.2;
 
-let ScaleGun_Count = 0;
+let ScaleGunMass = [];
+for(let i = 1; i < 2; i++){
+let ScaleGun = new PIXI.NineSlicePlane(PIXI.Texture.from('assets/gradient.png'), 10, 10, 10, 10);
+ScaleGun.width = 900;
+ScaleGun.height = 300;
+ScaleGun.scale.set(0.25);
+ScaleGunMass.push(ScaleGun);
+ScaleContainer.addChild(ScaleGun);
+ScaleGun.alpha = 0;
+}
 
-const ScaleGun = new PIXI.NineSlicePlane(PIXI.Texture.from('assets/scale1.png'), 10, 10, 10, 10);
+
+  function ScaleTime(){
+  for(let i = 0; i<1;i++){
+  let ScaleGun = ScaleGunMass[i];
+  ScaleGun.alpha = 1;
+  if(ScaleGun.width > 0)
+  ScaleGun.width -=0.002;}
   
-ScaleGun.x = lifeText.x;
-ScaleGun.y = bunny.y;
-
-app.stage.addChild(ScaleGun);
-
+  setTimeout(() => {
+    for(let i = 0; i<1;i++){
+      let ScaleGun = ScaleGunMass[i];
+      ScaleGun.alpha = 0; ScaleGun.width = 900;}},10000)
+}
+  
+  
 // Функция обновления тикера сообщения
 function updateStatusMessage(Sometext, sometarget) {
   Sometext.text = sometarget;
@@ -349,32 +468,6 @@ function updateStatusMessage(Sometext, sometarget) {
 // Переменная для считываения координат мышки
 
 const mouseCoords = app.renderer.plugins.interaction.mouse.global;
-
-// Анимация тикера для звезд
-app.ticker.add((delta) => {
-  
-  speed += (warpSpeed - speed) / 20;
-  cameraZ += delta * 10 * (speed + baseSpeed);
-  for (let i = 0; i < starAmount; i++) {
-      const star = stars[i];
-      if (star.z < cameraZ) randomizeStar(star);
-      // Карта 3D проецирования для звезд
-      const z = star.z - cameraZ;
-      star.sprite.x = star.x * (fov / z) * app.renderer.screen.width + app.renderer.screen.width / 2;
-      star.sprite.y = star.y * (fov / z) * app.renderer.screen.width + app.renderer.screen.height / 2;
-
-      // Рахмер звезд и их вращение
-      const dxCenter = star.sprite.x - app.renderer.screen.width / 2;
-      const dyCenter = star.sprite.y - app.renderer.screen.height / 2;
-      const distanceCenter = Math.sqrt(dxCenter * dxCenter + dyCenter * dyCenter);
-      const distanceScale = Math.max(0, (2000 - z) / 2000);
-      star.sprite.scale.x = distanceScale * starBaseSize;
-      
-      // Движения звезд от центра к краю
-      star.sprite.scale.y = distanceScale * starBaseSize + distanceScale * speed * starStretch * distanceCenter / app.renderer.screen.width;
-      star.sprite.rotation = Math.atan2(dyCenter, dxCenter) + Math.PI / 2;
-  }
-});
 
 app.ticker.add(() => {
   
@@ -458,16 +551,16 @@ if(a.interactive == true)
 pointtarget++;
 check_boom = false;
 a.interactive = false;
-app.stage.removeChild(a);
+GameContainer.removeChild(a);
 updateStatusMessage(pointText,Math.floor(pointtarget));
 }
 
 // Функция исчезновения вещей
 function heal_visiblity(c){
-  app.stage.removeChild(c);
+
+  GameContainer.removeChild(c);
   c.interactive = false;
   bunny.tint = 0xFFFFFF;
-  check = false;
   }
 
 
@@ -522,7 +615,7 @@ else if(react(a, bunny) && life > 0 && a.interactive == true)
     bool = 0;
     app.ticker.add(bunny_alpha_animate);
     life -= 0.018;
-    setTimeout(function status(){bool = 1; bunny.alpha = 1;},2000);
+    setTimeout(() => {bool = 1; bunny.alpha = 1;},2000);
     updateStatusMessage(lifeText, Math.floor(life));
     }
 if (react(a, bullet) && a.interactive == true){
@@ -550,7 +643,7 @@ if(a.y == bunny.y + 50)
 {
   a.interactive = false;
   app.stage.ticker.stop(a);
-  app.stage.removeChild(a);
+  GameContainer.removeChild(a);
   a.destroy();
   b.splice(i);
 }
@@ -567,15 +660,16 @@ if(a.y == bunny.y + 50)
   else {
   bullet2.y = app.screen.height-300;
   }
-  if (react(a, bullet2) && bullet2.visible == true){
+  if (react(a, bullet2) && bullet2.alpha == 1){
     a.texture = texture_boom;
     a.rotation -= Math.random() * 0.05;
     a.scale.set(0.1);
     a.tint = 0xFFFFFF;
     setTimeout(() => visiblity(a),200);}
   if(status == true){
+  bullet2.alpha = 1;  
   bullet.visible = false;
-  bullet2.visible = true;
+  ScaleTime();
   setTimeout(() => {
     status = false;
   },10000);
@@ -583,7 +677,7 @@ if(a.y == bunny.y + 50)
 }
 if(status == false)
 { bullet2.y = bunny.y;
-  bullet2.visible = false; 
+  bullet2.alpha = 0; 
   bullet.visible = true;
 }
 } 
@@ -615,16 +709,18 @@ function magazine_coming(b){
   b.direction += b.turningSpeed * 0.04;
   b.y += Math.random() * b.speed;
   if(react(b, bunny)&&b.interactive == true && life > 0)
-    { status = true;
-      check = true;
+    { 
+      status = true;
       bunny.tint = 0xFF0000;
       setTimeout(()=> heal_visiblity(b), 500);
+      
     }
     if(b.y == bunny.y - 50)
 {
   app.stage.ticker.stop(b);
   b.destroy;
   b.splice(i);
+}
 }
 }
 
