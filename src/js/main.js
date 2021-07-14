@@ -1,5 +1,4 @@
 import * as PIXI from 'pixi.js'
-import anime from 'animejs/lib/anime.es.js';
 import PixiApngAndGif from 'pixi-apngandgif';
 
 // Основные параметры приложения
@@ -21,8 +20,8 @@ const loader = PIXI.Loader.shared,
         crossOrigin:''
     },
     imgs = {
-        rocket:'assets/rocket4.gif',
-        booms: 'assets/boom2.gif',
+        rocket:'assets/images/rocket4.gif',
+        booms: 'assets/images/boom2.gif',
     };
 
 
@@ -211,7 +210,7 @@ const style = new PIXI.TextStyle({
 
 
 // Картинка заднего фона
-const background_image = PIXI.Texture.from('assets/back2.jpg');
+const background_image = PIXI.Texture.from('assets/images/back2.jpg');
 const back = new PIXI.Sprite(background_image);
 back.anchor.x = 0;
 back.anchor.y = 0;
@@ -223,7 +222,7 @@ app.stage.addChild(back);
 
 // Звезды
 
-const starTexture = PIXI.Texture.from('assets/star.png');
+const starTexture = PIXI.Texture.from('assets/images/star.png');
 
 const starAmount = 1000;
 let cameraZ = 0;
@@ -296,12 +295,17 @@ function onClickstartText(){
 
 
 // Опции
-const optionText = new PIXI.Text('Options', style);
+const optionText = new PIXI.Text('Class works', style);
 optionText.anchor.set(0.5);
 optionText.scale.set(2);
 optionText.x = app.screen.width/2;
 optionText.y = app.screen.height/2;
 optionText.zIndex = 10;
+optionText.interactive = true;
+optionText.buttonMode = true;
+optionText.on('pointerdown', ()=> {
+  window.location.href = ('../index 2.html')
+})
 app.stage.addChild(optionText);
 
 // Анимация ракеты
@@ -359,10 +363,10 @@ GameContainer.off();
 // Создание метеоритов
 
 const astrosFrames = [
-  '/assets/astro2.png',
-  '/assets/astro3.png',
-  '/assets/astro4.png',
-  '/assets/astro.png',
+  'assets/images/astro2.png',
+  'assets/images/astro3.png',
+  'assets/images/astro4.png',
+  'assets/images/astro.png',
 ]
 const astros = [];
 var check = new Boolean(false); 
@@ -402,10 +406,10 @@ AstroLoop();
 
 
 // Создание взрыва
-const texture_boom = PIXI.Texture.from('assets/boom.png')
+const texture_boom = PIXI.Texture.from('assets/images/boom.png')
 
 // Создание пули
-const texture2 = PIXI.Texture.from('assets/bullet.png');
+const texture2 = PIXI.Texture.from('assets/images/bullet.png');
 const bullet = PIXI.Sprite.from(texture2);
 bullet.anchor.set(0.5);
 bullet.interactive = true;
@@ -424,7 +428,7 @@ if(main_check == true)
 function GunLoop () {           
 setTimeout(function () { 
   
-  const texture2 = PIXI.Texture.from('assets/bulletstorm.png');
+  const texture2 = PIXI.Texture.from('assets/images/bulletstorm.png');
   const bullet2 = PIXI.Sprite.from(texture2);
   bullet2.anchor.set(0.5);
   bullet2.tint = 0xFFD300;
@@ -482,7 +486,7 @@ if(main_check == true)
 {               
 function HealLoop () {           
 setTimeout(function () {    
-    const healpoint = PIXI.Sprite.from('/assets/healpoint.png');
+    const healpoint = PIXI.Sprite.from('assets/images/healpoint.png');
     healpoint.interactive = true;
     healpoint.anchor.set(0.5);
     healpoint.x = Math.random() * app.screen.width;
@@ -513,7 +517,7 @@ if(main_check == true)
 {                
 function MagazineLoop () {           
 setTimeout(function () {    
-    const magaz = PIXI.Sprite.from('/assets/gunbullet2.png');
+    const magaz = PIXI.Sprite.from('assets/images/gunbullet2.png');
     magaz.interactive = true;
     magaz.anchor.set(0.5);
     magaz.x = Math.random() * app.screen.width;
@@ -622,7 +626,7 @@ lvlText2.zIndex = 10;
 GameContainer.addChild(lvlText2);
 
 // Кнопка паузы
-let Pause_button = new PIXI.Sprite.from('assets/pause_button.png')
+let Pause_button = new PIXI.Sprite.from('assets/images/pause_button.png')
 GameContainer.addChild(Pause_button);
 Pause_button.scale.set(0.2);
 Pause_button.anchor.set(0.5);
@@ -663,7 +667,7 @@ ScaleContainer.y = app.screen.height/1.2;
 
 let ScaleGunMass = [];
 for(let i = 1; i < 2; i++){
-let ScaleGun = new PIXI.NineSlicePlane(PIXI.Texture.from('assets/gradient.png'), 10, 10, 10, 10);
+let ScaleGun = new PIXI.NineSlicePlane(PIXI.Texture.from('assets/images/gradient.png'), 10, 10, 10, 10);
 ScaleGun.width = 900;
 ScaleGun.height = 300;
 ScaleGun.scale.set(0.25);

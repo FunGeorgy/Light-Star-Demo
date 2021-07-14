@@ -1,0 +1,41 @@
+body {
+    margin: 0;
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.content {
+    height: 73.35vh;
+}
+
+header {
+    border: 3px solid red;
+    color: red;
+    height: 10vh;
+}
+
+nav {
+    border: 3px solid green;
+    color: green;
+    height: 7h;
+}
+
+.main {
+    border: 3px solid blue;
+    color: blue;
+}
+
+.sidebar {
+    border: 3px solid purple;
+    color: purple;
+}
+
+footer {
+    border: 3px solid cyan;
+    color: cyan;
+    height: 10vh;
+}
